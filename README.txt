@@ -15,11 +15,12 @@ todo
 build instructions
 ---
 * the app can be build trivally like any other CMake project. however:
-	you'll need Visual Studio (MSBuild) to support WinRT/MIDI2 APIs. otherwise you'd be limited to the legacy WinMM one	
+	* you'll need Visual Studio (MSBuild) to support WinRT/MIDI2 APIs. otherwise you'd be limited to the legacy WinMM one	
 * in this case, open the project in Visual Studio (2022+) and build it from there.
 * additionally, you'll need to have Microsoft.Windows.Devices.Midi2 package installed to support MIDI2 APIs.
-* you can get it from https://github.com/microsoft/MIDI/releases/download/dev-preview-6/Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg
-
+	* this implies you'll need NuGet installed and available on your PATH as well
+		* you can get it from https://github.com/microsoft/MIDI/releases/download/dev-preview-6/Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg
+		* then, you can add it via `nuget add -Source out\build\...\packages Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg`
 references
 ---
 * https://github.com/juce-framework/JUCE/commit/9a38505dad7a5655edae320993f1926ae3979068
