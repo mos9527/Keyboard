@@ -26,10 +26,36 @@ file(
 # Add source to this project's executable.
 add_executable (Keyboard ${SOURCES})
 
-# WinRT (Windows Runtime) support
-add_compile_definitions(WINRT)
-# MIDI2 support
-add_compile_definitions(MIDI2)
+if (WIN32)
+	message(STATUS "Building for Windows")
+	# WinRT (Windows Runtime) support
+	find_program(NUGET_EXE NAMES nuget)
+	# Snippet inspired by https://github.com/woodemi/quick_blue/pull/10/files
+	if(NOT NUGET_EXE)
+		message("NuGet not found. WinRT support disabled.")
+	else()
+	function(nuget_install package)
+		execute_process(COMMAND ${NUGET_EXE} install ${package} -ExcludeVersion -OutputDirectory ${CMAKE_BINARY_DIR}/packages RESULT_VARIABLE EXIT_CODE)	
+		if (EXIT_CODE EQUAL 0)
+			set_target_properties(Keyboard PROPERTIES VS_PROJECT_IMPORT ${CMAKE_BINARY_DIR}/packages/${package}/build/native/${package}.props)		
+			message("Restored ${package}")
+		else()
+			message(WARNING "Failed to restore ${package}") 
+		endif()
+		set(EXIT_CODE ${EXIT_CODE} PARENT_SCOPE)
+	endfunction()
+	nuget_install("Microsoft.Windows.CppWinRT")
+	if (EXIT_CODE EQUAL 0)
+		add_compile_definitions(WINRT)
+		message("WinRT support enabled.")
+		nuget_install("Microsoft.Windows.Devices.Midi2")
+		if (EXIT_CODE EQUAL 0)
+			add_compile_definitions(MIDI2)
+			message("MIDI2 support enabled.")
+		endif()
+	endif()
+endif()
+endif()
 
 target_precompile_headers(Keyboard PUBLIC "src/pch.hpp")
 target_include_directories(Keyboard PRIVATE PDCurses)

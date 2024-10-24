@@ -102,24 +102,24 @@ namespace midi {
 			if (!getStatus()) return;
 			visit(visitor{
 				[&](noteOnMessage const& msg) {
-					port.SendMessageW(MidiNoteOnMessage(msg.channel, msg.note, msg.velocity));
+					port.SendMessageA(MidiNoteOnMessage(msg.channel, msg.note, msg.velocity));
 				},
 				[&](noteOffMessage const& msg) {
-					port.SendMessageW(MidiNoteOffMessage(msg.channel, msg.note, msg.velocity));
+					port.SendMessageA(MidiNoteOffMessage(msg.channel, msg.note, msg.velocity));
 				},
 				[&](programChangeMessage const& msg) {
-					port.SendMessageW(MidiProgramChangeMessage(msg.channel, msg.program));
+					port.SendMessageA(MidiProgramChangeMessage(msg.channel, msg.program));
 				},
 				[&](pitchBendMessage const& msg) {
-					port.SendMessageW(MidiPitchBendChangeMessage(msg.channel, msg.level));
+					port.SendMessageA(MidiPitchBendChangeMessage(msg.channel, msg.level));
 				},
 				[&](controlChangeMessage const& msg) {
-					port.SendMessageW(MidiControlChangeMessage(msg.channel, msg.controller, msg.value));
+					port.SendMessageA(MidiControlChangeMessage(msg.channel, msg.controller, msg.value));
 				},
 				[&](sysExMessage const& msg) {
 					Buffer buffer(msg->size());
 					memcpy(buffer.data(), msg->data(), msg->size());
-					port.SendMessageW(MidiSystemExclusiveMessage(buffer));
+					port.SendMessageA(MidiSystemExclusiveMessage(buffer));
 				}
 				}, message);
 		}

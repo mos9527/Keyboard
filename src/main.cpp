@@ -8,6 +8,8 @@
 #include "hal/hal_midi.hpp"
 #include "data/midi/chords.hpp"
 #include "data/midi/gm.hpp"
+
+#include "build_meta.hpp"
 #define CONFIG_FILENAME "config"
 struct {
 	int inputBackend = 0;
@@ -191,13 +193,7 @@ void draw() {
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::Begin("keyboard");
 	if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_None)) {
-#ifdef _WIN32
-		if (ImGui::Button("Set Console Window Topmost")) {
-			HWND hwnd = GetConsoleWindow();
-			SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-			ShowWindow(hwnd, SW_NORMAL);
-		}
-#endif
+		ImGui::Text(build_meta::get_feature_flag_string().c_str());
 		if (ImGui::Button("Save")) g_config.save();
 		ImGui::SameLine();
 		if (ImGui::Button("Load")) g_config.load(), setup();

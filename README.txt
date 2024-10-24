@@ -12,6 +12,14 @@ todo
 * add option to display selected chord
 * properly draw the staff
 
+build instructions
+---
+* the app can be build trivally like any other CMake project. however:
+	you'll need Visual Studio (MSBuild) to support WinRT/MIDI2 APIs. otherwise you'd be limited to the legacy WinMM one	
+* in this case, open the project in Visual Studio (2022+) and build it from there.
+* additionally, you'll need to have Microsoft.Windows.Devices.Midi2 package installed to support MIDI2 APIs.
+* you can get it from https://github.com/microsoft/MIDI/releases/download/dev-preview-6/Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg
+
 references
 ---
 * https://github.com/juce-framework/JUCE/commit/9a38505dad7a5655edae320993f1926ae3979068
@@ -29,3 +37,4 @@ references
 * General MIDI 2 (February 6, 2007 Version 1.2a)
 * https://microsoft.github.io/MIDI/
 * https://microsoft.github.io/MIDI/sdk-winrt-messages/README.html
+* https://github.com/woodemi/quick_blue/pull/10/files
