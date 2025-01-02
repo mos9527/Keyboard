@@ -38,3 +38,4 @@ references
 * https://microsoft.github.io/MIDI/
 * https://microsoft.github.io/MIDI/sdk-winrt-messages/README.html
 * https://github.com/woodemi/quick_blue/pull/10/files
+* https://ianring.com/musictheory
