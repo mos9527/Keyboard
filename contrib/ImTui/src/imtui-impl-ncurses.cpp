@@ -283,8 +283,7 @@ static std::array<std::pair<bool, int>, 256*256> colPairs;
 
 void ImTui_ImplNcurses_DrawScreen(bool active) {
     if (active) nActiveFrames = 10;
-    if (is_termresized())
-        resize_term(0, 0);
+
     wrefresh(stdscr);
 
     int nx = g_screen->nx;

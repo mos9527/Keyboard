@@ -1,6 +1,11 @@
 #pragma once
 // Monolithic header for Hardware Abstraction Layer (HAL)
 
+// macOS
+#ifdef __APPLE__
+#include <CoreMIDI/CoreMIDI.h>
+#endif
+
 // Windows
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN

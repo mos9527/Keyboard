@@ -24,7 +24,7 @@ struct {
 	int keyboardOffset = 0;
 	void save() {
 		FILE* file = fopen(CONFIG_FILENAME, "wb");
-		ASSERT(file, L"Failed to open file for writing");
+		ASSERT(file, "Failed to open file for writing");
 		fwrite(this, sizeof(*this), 1, file);
 		fclose(file);
 	};
@@ -49,8 +49,11 @@ const char* MIDI_BACKENDS[] = {
 #ifdef HAL_MIDI_WINRT_IMPL
 	"WinRT",
 #ifdef HAL_MIDI_WINMIDI2_IMPL
-	"MIDI2"
+	"MIDI2",
 #endif
+#endif
+#ifdef HAL_MIDI_COREAUDIO_IMPL
+	"CoreAudio",
 #endif
 };
 template<typename... T> midiInContext_t make_midi_input_context(T const&... args) {
@@ -64,10 +67,12 @@ template<typename... T> midiInContext_t make_midi_input_context(T const&... args
 	case 1:
 		return std::make_unique<midi::inputContext_WinRT>(args...);
 #endif
-	case 0:
+	case 0:default:
 #ifdef HAL_MIDI_WINMM_IMPL
-	default:
 		return std::make_unique<midi::inputContext_WinMM>(args...);
+#endif
+#ifdef HAL_MIDI_COREAUDIO_IMPL
+		return std::make_unique<midi::inputContext_CoreAudio>(args...);
 #endif
 	}
 }
@@ -82,10 +87,12 @@ template<typename... T> midiOutContext_t make_midi_output_context(T const&... ar
 	case 1:
 		return std::make_unique<midi::outputContext_WinRT>(args...);
 #endif
+	case 0:default:
 #ifdef HAL_MIDI_WINMM_IMPL
-	case 0:
-	default:
 		return std::make_unique<midi::outputContext_WinMM>(args...);
+#endif
+#ifdef HAL_MIDI_COREAUDIO_IMPL
+		return std::make_unique<midi::outputContext_CoreAudio>(args...);
 #endif
 	}
 }
@@ -120,20 +127,9 @@ void setup() {
 	if (g_midiOutDevices.size())
 		g_midiOutContext = make_midi_output_context(g_midiOutDevices[std::min(g_midiOutDevices.size() - 1, (size_t)g_config.outputDeviceIndex)]);
 	if (g_midiInContext->getStatus())
-		g_midiOutContext->sendMessage(midi::programChangeMessage{ (BYTE)g_config.outputChannel, (BYTE)g_midiChannelStates[g_config.outputChannel].program });
+		g_midiOutContext->sendMessage(midi::programChangeMessage{ (uint8_t)g_config.outputChannel, (uint8_t)g_midiChannelStates[g_config.outputChannel].program });
 }
 void poll_input() {
-	auto map_midi_to_keystroke = [&](uint8_t velocity, uint8_t key) {
-		if (g_config.keyboardKeymap[key]) {
-			INPUT input{};
-			input.type = INPUT_KEYBOARD;
-			int scan = MapVirtualKeyA(g_config.keyboardKeymap[key], MAPVK_VK_TO_VSC);
-			input.ki.wScan = scan;
-			input.ki.dwFlags = velocity ? 0 : KEYEVENTF_KEYUP;
-			input.ki.dwFlags |= KEYEVENTF_SCANCODE;
-			SendInput(1, &input, sizeof(INPUT));
-		}
-		};
 	using namespace midi;
 	if (g_midiInContext) {
 		if (g_midiInContext->getStatus()) {
@@ -148,8 +144,6 @@ void poll_input() {
 							if (msg.velocity == 0) passthrough = false;
 							else g_midiChannelStates[msg.channel].keys[msg.note] = msg.velocity;
 						}
-						if (msg.channel == g_config.inputChannel)
-							map_midi_to_keystroke(msg.velocity, msg.note);
 						if (g_midiChannelStates[msg.channel].muted)
 							passthrough = false;
 					},
@@ -158,8 +152,6 @@ void poll_input() {
 							g_midiChannelStates[msg.channel].keys[msg.note] = 0;
 						else
 							passthrough = false;
-						if (msg.channel == g_config.inputChannel)
-							map_midi_to_keystroke(0, msg.note);
 					},
 					[&](pitchBendMessage& msg) {
 						g_midiChannelStates[msg.channel].controls.pitchBend = msg.level;
@@ -308,7 +300,7 @@ void draw() {
 				ImGui::SameLine();
 				program_changed |= draw_twiddle_button(program, 0, midi::gm::programs_size, 32);
 				if (program_changed)
-					g_midiOutContext->sendMessage(midi::programChangeMessage{ (BYTE)g_config.outputChannel, (BYTE)program });				
+					g_midiOutContext->sendMessage(midi::programChangeMessage{ (uint8_t)g_config.outputChannel, (uint8_t)program });
 			}
 		}
 		static bool sync_input_output_chn_select = true;
@@ -360,17 +352,11 @@ void draw() {
 				if (!isBlackKey) {
 					int paddingX = ImGui::GetStyle().FramePadding.x;
 					draw_list->AddRectFilled(ImVec2(paddingX + pos.x + offsetX, pos.y - blackKeySize.y), ImVec2(paddingX + pos.x + offsetX + keySize.x, pos.y), ImColor(keyColor));
-				}				
-				std::string keyName = std::string{ key_table[noteInOctave] } + std::to_string(octave);
-				if (g_config.keyboardKeymap[note]) {
-					UINT vkCode = g_config.keyboardKeymap[note];
-					UINT charCode = MapVirtualKeyA(vkCode, MAPVK_VK_TO_CHAR);
-					keyName += std::string{ "\n~\n" } + std::string(1, static_cast<char>(charCode ? charCode : '#'));
 				}
+				std::string keyName = std::string{ key_table[noteInOctave] } + std::to_string(octave);
 				if (ImGui::Button(keyName.c_str(), keySize)) {
 					ImGui::PopID();
 					activeKey = note;
-					ImGui::OpenPopup("Key Bind");
 				}
 				else { ImGui::PopID(); }
 				ImGui::SameLine();
@@ -400,29 +386,7 @@ void draw() {
 		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 		static int frameActive = 0;
-		if (ImGui::BeginPopupModal("Key Bind", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-			ImGui::Text("Mapping MIDI %d (%s)!", activeKey, key_table[activeKey % 12]);
-			ImGui::Separator();
-			ImGui::Text("Waiting for key press...");
-			if (ImGui::Button("Cancel")) ImGui::CloseCurrentPopup();
-			const std::vector<int> VK_SCANS{
-				/* 0-9 */ 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
-				/* A-Z */ 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A,
-				/* F1-F12 */ VK_F1, VK_F2, VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10, VK_F11, VK_F12,
-				/* ALT,CTRL */ VK_LSHIFT, VK_RSHIFT, VK_LCONTROL, VK_RCONTROL, VK_LMENU, VK_RMENU,
-				/* SPACE, PAGES */ VK_SPACE, VK_PRIOR, VK_NEXT, VK_END, VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN,
-				/* ESC, etc */ VK_ESCAPE, VK_RETURN, VK_BACK, VK_DELETE, VK_INSERT, VK_SNAPSHOT, VK_CAPITAL, VK_SCROLL, VK_PAUSE, VK_TAB, VK_LWIN, VK_RWIN
-			};
-			for (int k : VK_SCANS) {
-				if ((GetAsyncKeyState(k) & (1 << 31)) && k != VK_CAPITAL) {
-					g_config.keyboardKeymap[activeKey] = k;
-					ImGui::CloseCurrentPopup();
-					break;
-				}
-			}
-			ImGui::EndPopup();
-		}
-		{			
+		{
 			ImGui::Checkbox("Sharps", &g_config.keyboardDisplayFlatOrSharp);		
 			auto& muted = g_midiChannelStates[g_config.outputChannel].muted;
 			auto& solo = g_midiChannelStates[g_config.outputChannel].solo;
@@ -432,7 +396,7 @@ void draw() {
 			auto release_all_keys = [&](int channel) {
 				for (int i = 0; i < 128; i++) {
 					if (g_midiChannelStates[channel].keys[i] > 0) {
-						g_midiOutContext->sendMessage(midi::noteOffMessage{ (BYTE)channel, (BYTE)i, 0 });
+						g_midiOutContext->sendMessage(midi::noteOffMessage{ (uint8_t)channel, (uint8_t)i, 0 });
 						g_midiChannelStates[channel].keys[i] = 0;
 					}
 				}
@@ -475,6 +439,9 @@ void cleanup() {
 	if (g_midiInContext) g_midiInContext.reset();
 }
 int main() {
+#ifdef _WIN32
+	SetConsoleOutputCP(65001);
+#endif
 #ifdef HAL_MIDI_WINRT_IMPL
 	winrt::init_apartment();
 #ifdef HAL_MIDI_WINMIDI2_IMPL
@@ -482,7 +449,7 @@ int main() {
 	winrt::Microsoft::Windows::Devices::Midi2::Initialization::MidiServicesInitializer::InitializeSdkRuntime();
 #endif
 #endif
-	SetConsoleOutputCP(65001);
+
 #ifndef NO_UI
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();

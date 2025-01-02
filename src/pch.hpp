@@ -17,14 +17,18 @@
 
 #define PRED(X) [](auto const& lhs, auto const& rhs) {return X;}
 #define PAIR2(T) std::pair<T,T>
-static void _assert(const wchar_t* cond_s, const wchar_t* fmt = L"", auto ...args) {
-	static wchar_t _assert_msg_buffer[1024];
-	int p = swprintf(_assert_msg_buffer, L"Assertion failed: %ls\n", cond_s);
-	swprintf(_assert_msg_buffer + p, fmt, args...);
-	MessageBoxW(NULL, _assert_msg_buffer, L"Error", MB_ICONERROR);
+static void _assert(const char* cond_s, const char* fmt = "", auto ...args) {
+	static char _assert_msg_buffer[1024];
+	int p = sprintf(_assert_msg_buffer, "Assertion failed: %s\n", cond_s);
+	sprintf(_assert_msg_buffer + p, fmt, args...);
+#ifdef _WIN32
+	MessageBoxA(NULL, _assert_msg_buffer, L"Error", MB_ICONERROR);
+#else
+	std::wcerr << _assert_msg_buffer << std::endl;
+#endif
 	exit(1);
 }
-#define ASSERT(cond, ...) if (!(cond)) _assert(L#cond, __VA_ARGS__);
+#define ASSERT(cond, ...) if (!(cond)) _assert(#cond, __VA_ARGS__);
 // https://stackoverflow.com/a/22713396
 template<typename T, size_t N> constexpr size_t extent_of(T(&)[N]) { return N; };
 #define DEFINE_DATA_ARRAY(T, NAME, ...) T NAME[] = {__VA_ARGS__}; constexpr size_t NAME##_size = extent_of(NAME);
@@ -45,7 +49,6 @@ template<typename T, size_t Size> class fixed_vector {
 public:	
 	inline fixed_vector() = default;
 	inline explicit fixed_vector(const T* data, const size_t size) {
-		ASSERT(size <= Size);
 		memcpy(this->data(), data, size);		
 		resize(size);
 	}
@@ -61,7 +64,7 @@ public:
 
 	inline T* data() { return _data.data(); }
 	inline size_t size() { return _size; }
-	inline void resize(size_t size) { ASSERT(size <= Size); _size = size; }
+	inline void resize(size_t size) { _size = size; }
 };
 // Column major matrix
 template<typename T, size_t Rows, size_t Cols> class fixed_matrix {
@@ -80,6 +83,6 @@ public:
 	inline std::span<column_type> span_max() { return { begin(), end_max() }; }
 
 	inline size_t size() { return _size; }
-	inline void resize(size_t size) { ASSERT(size <= Rows); _size = size; }
+	inline void resize(size_t size) { _size = size; }
 };
 #endif // !__cplusplus

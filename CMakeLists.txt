@@ -12,24 +12,20 @@ endif()
 project ("Keyboard")
 set(CMAKE_CXX_STANDARD 20)
 
-set(MINGW true)
-include_directories("contrib/PDCurses")
-add_subdirectory("contrib/ImTui")
-
-
-file(
-	GLOB_RECURSE SOURCES
-	"src/*.cpp" 
-	"contrib/PDCurses/wincon/*.c" "contrib/PDCurses/pdcurses/*.c" 
-	"contrib/ImTui/src/imtui-impl-ncurses.cpp"
-)
-# Add source to this project's executable.
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable (Keyboard ${SOURCES})
 
 if (WIN32)
+	set(MINGW true)
 	message(STATUS "Building for Windows")
 	# UTF8
 	target_compile_options(Keyboard PRIVATE "/utf-8")
+	# PDCurses
+	include_directories("contrib/PDCurses")
+	file(GLOB PDCURSES_SOURCES "contrib/PDCurses/wincon/*.c" "contrib/PDCurses/pdcurses/*.c")
+	add_library(PDCurses STATIC ${PDCURSES_SOURCES})
+	target_link_libraries(Keyboard PRIVATE PDCurses)
+	target_include_directories(Keyboard PRIVATE PDCurses)
 	# WinRT (Windows Runtime) support
 	find_program(NUGET_EXE NAMES nuget)
 	# Snippet inspired by https://github.com/woodemi/quick_blue/pull/10/files
@@ -64,8 +60,17 @@ if (WIN32)
 endif()
 endif()
 
-target_precompile_headers(Keyboard PUBLIC "src/pch.hpp")
-target_include_directories(Keyboard PRIVATE PDCurses)
+if (APPLE)
+	message(STATUS "Building for macOS")
+	# CoreAudio
+	target_link_libraries(Keyboard PRIVATE "-framework Foundation -framework CoreMidi")
+endif()
+
+# ImTui
 target_include_directories(Keyboard PRIVATE "contrib/ImTui/include")
 target_include_directories(Keyboard PRIVATE "contrib/ImTui/third-party/imgui")
-target_link_libraries(Keyboard PRIVATE imtui imgui-for-imtui)
+set(IMTUI_SUPPORT_NCURSES ON)
+add_subdirectory("contrib/ImTui")
+
+target_link_libraries(Keyboard PRIVATE imtui imtui-ncurses imgui-for-imtui)
+target_precompile_headers(Keyboard PUBLIC "src/pch.hpp")

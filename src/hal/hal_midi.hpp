@@ -1,6 +1,11 @@
 #ifndef HAL_MIDI
 // MIDI
 #include "midi/midi.hpp"
+
+#ifdef __APPLE__
+#include "midi/midi_coreaudio.hpp"
+#endif // !__APPLE
+
 #ifdef _WIN32
 #include "midi/midi_winmm.hpp"
 #ifdef WINRT
