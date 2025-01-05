@@ -8,6 +8,8 @@
 
 // Windows
 #ifdef _WIN32
+// UTF8 Encoding
+#pragma execution_character_set("utf-8")
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif // !WIN32_LEAN_AND_MEAN

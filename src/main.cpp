@@ -440,7 +440,7 @@ void cleanup() {
 }
 int main() {
 #ifdef _WIN32
-	SetConsoleOutputCP(65001);
+	SetConsoleOutputCP(CP_UTF8);
 #endif
 #ifdef HAL_MIDI_WINRT_IMPL
 	winrt::init_apartment();

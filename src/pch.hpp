@@ -22,7 +22,7 @@ static void _assert(const char* cond_s, const char* fmt = "", auto ...args) {
 	int p = sprintf(_assert_msg_buffer, "Assertion failed: %s\n", cond_s);
 	sprintf(_assert_msg_buffer + p, fmt, args...);
 #ifdef _WIN32
-	MessageBoxA(NULL, _assert_msg_buffer, L"Error", MB_ICONERROR);
+	MessageBoxA(NULL, _assert_msg_buffer, "Error", MB_ICONERROR);
 #else
 	std::wcerr << _assert_msg_buffer << std::endl;
 #endif
@@ -45,7 +45,7 @@ template<typename... T> struct visitor : T... {
 // Fixed size vector
 template<typename T, size_t Size> class fixed_vector {
 	std::array<T, Size> _data{};
-	size_t _size{ Size };
+	size_t _size{ 0 };
 public:	
 	inline fixed_vector() = default;
 	inline explicit fixed_vector(const T* data, const size_t size) {
@@ -53,6 +53,8 @@ public:
 		resize(size);
 	}
 	
+	inline void clear() { _size = 0; }
+	inline void push_back(const T& value) { _data[_size++] = value; }
 	inline T& operator[](size_t index) { return _data[index]; }
 	
 	inline std::array<T, Size>::iterator begin() { return _data.begin(); }

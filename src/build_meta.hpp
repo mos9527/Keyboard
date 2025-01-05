@@ -14,9 +14,11 @@ namespace build_meta {
 			s += "Platform ";
 #ifdef _WIN32
 			s += "Windows";
+#elif __APPLE__
+			s += "macOS";
 #endif // _WIN32
 			s += "\n";
-			s += "Features: ";
+			s += "Extra Features: ";
 #ifdef _WIN32
 			s += "WINMM ";
 #endif

@@ -24,6 +24,7 @@ if (WIN32)
 	include_directories("contrib/PDCurses")
 	file(GLOB PDCURSES_SOURCES "contrib/PDCurses/wincon/*.c" "contrib/PDCurses/pdcurses/*.c")
 	add_library(PDCurses STATIC ${PDCURSES_SOURCES})
+	target_compile_definitions(PDCurses PRIVATE PDC_FORCE_UTF8)
 	target_link_libraries(Keyboard PRIVATE PDCurses)
 	target_include_directories(Keyboard PRIVATE PDCurses)
 	# WinRT (Windows Runtime) support
