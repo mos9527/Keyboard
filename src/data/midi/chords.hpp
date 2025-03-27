@@ -30,7 +30,7 @@ namespace midi {
 		};
 		typedef vector<chord_t> chord_arr_t;
 		typedef pair<key_t, chord_arr_t> chord_item_t;
-		typedef array<uint8_t, 256> midi_key_states_t;
+		typedef array<int, 256> midi_key_states_t;
 		typedef fixed_matrix<char, 256, 256> chord_names_t;
 	}
 	namespace chords {
@@ -41,6 +41,8 @@ namespace midi {
 		EXTERN_DATA_ARRAY(const chord_item_t, scale_table);
 	}
 	namespace chords {
+		const int format_name(key_t const& key, const chord_t& chord, const char** key_table, char* str, uint8_t root);
+		const midi_key_states_t to_key_states(key_t const& intervals, uint8_t root);
 		const chord_item_t* find(key_t const& key, const chord_item_t* data, size_t size);
 		const int format(midi_key_states_t const& state, chord_names_t& lines, const char** key_table);
 	}

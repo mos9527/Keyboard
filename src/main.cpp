@@ -21,7 +21,7 @@ struct {
 	int outputChannel = 0;
 	int keyboardKeymap[256]{};
 	bool keyboardDisplayFlatOrSharp = 0; // 0 flat 1 sharp
-	int keyboardOffset = 0;
+	int keyboardOffset = 64;
 	void save() {
 		FILE* file = fopen(CONFIG_FILENAME, "wb");
 		ASSERT(file, "Failed to open file for writing");
@@ -308,6 +308,82 @@ void draw() {
 		ImGui::SameLine();
 		if (sync_input_output_chn_select) g_config.outputChannel = g_config.inputChannel;
 		if (ImGui::Button("Refresh")) setup();
+	}
+	if (ImGui::CollapsingHeader("Viewer", ImGuiTreeNodeFlags_DefaultOpen)) {
+		static int root_key = 0, root_oct = 4;
+		bool dirty = false;
+		dirty |= ImGui::InputInt("Octave", &root_oct, 0, 8);
+		ImGui::SameLine();
+		if (ImGui::BeginCombo("Root", key_table[root_key])) {
+			for (int i = 0; i < 12; i++) {
+				bool selected = root_key == i;
+				if (ImGui::Selectable(key_table[i], &selected)) root_key = i, dirty |= true;
+			}
+			ImGui::EndCombo();
+		}
+		int root = root_key + root_oct * 12;
+		static char name_pattern[256]{ "Ionian" };
+		dirty |= ImGui::InputText("Pattern", name_pattern, sizeof(name_pattern));
+		static std::vector<std::pair<std::string, const midi::chords::key_t*>> names;
+		static bool init = false;
+		static bool preview = false;
+		if (dirty || !init) {
+			init = true;
+			if (preview)  g_midiChannelStates[g_config.inputChannel].keys = {};
+			char buf[256]{};
+			names.clear();
+			auto pb = [&](std::string str, auto ptr) {
+				if (str.find(name_pattern) == std::string::npos) return;
+				names.push_back({ str, ptr });
+				};
+			for (int i = 0; i < midi::chords::scale_table_size; i++) {
+				auto const& [keys, chords] = midi::chords::scale_table[i];
+				for (auto& v : chords) {
+					midi::chords::format_name(keys, v, (const char**)key_table, buf, root);
+					pb(buf, &keys);
+				}
+			}
+			std::sort(names.begin(), names.end());
+			int sz = names.size();
+			for (int i = 0; i < midi::chords::chord_table_size; i++) {
+				auto const& [keys, chords] = midi::chords::chord_table[i];
+				for (auto& v : chords) {
+					midi::chords::format_name(keys, v, (const char**)key_table, buf, root);
+					pb(buf, &keys);
+				}
+			}
+			std::sort(names.begin() + sz, names.end());
+		}
+		static int currPreview = 0;
+		if (currPreview >= names.size()) currPreview = 0;
+		ImGui::SameLine();
+		if (names.size()) {
+			if (ImGui::BeginCombo("Names", names[currPreview].first.c_str())) {
+				int idx = 0;
+				for (auto& [name, ptr] : names) {
+					if (ImGui::Selectable(name.c_str())) currPreview = idx;
+					idx++;
+				}
+				ImGui::EndCombo();
+			}
+		}
+		bool chkPreview = ImGui::Checkbox("Preview", &preview);
+		if (preview) {
+			if (names.size()) {
+				auto& [name, ptr] = names[currPreview];
+				ImGui::TextUnformatted(name.c_str());
+				auto sta = midi::chords::to_key_states(*ptr, root);
+				for (int i = 0; i < 256; i++)
+					g_midiChannelStates[g_config.inputChannel].keys[i] =
+					std::max(
+						g_midiChannelStates[g_config.inputChannel].keys[i],
+						sta[i]
+					);
+			}
+		}
+		if (chkPreview) {
+			if (!preview) g_midiChannelStates[g_config.inputChannel].keys = {};
+		}
 	}
 	if (ImGui::CollapsingHeader("Keyboard", ImGuiTreeNodeFlags_DefaultOpen)) {
 		const ImVec2 whiteKeySize(6, 8);

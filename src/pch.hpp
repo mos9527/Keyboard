@@ -12,7 +12,7 @@
 #include <source_location>
 #include <string>
 #include <variant>
-
+#include <bitset>
 #include "hal/hal.hpp"
 
 #define PRED(X) [](auto const& lhs, auto const& rhs) {return X;}
