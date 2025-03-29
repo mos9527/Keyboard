@@ -1,26 +1,28 @@
-keyboard
+Keyboard
 ---
-Simple TUI chords/notes visualization tool.
+![image](https://github.com/user-attachments/assets/982e5993-5188-4bc0-b434-e6ff33763085)
+
+MIDI Chord detector & browser. In your terminal.
 * Windows/macOS support
 * WinMM/WinRT/MIDI2/CoreAudio API support (BLE MIDI devices are supported w/ WinRT/MIDI2, Multi-client is supported w/ MIDI2)
-* detects chords/intervals and display their name(s).
-* supports (partial) MIDI passthrough to another output device
+* detects/visualizes chords/scales/intervals and display their name(s).
+* MIDI passthrough to another output device
 
-todo
+TODO
 ---
-* add option to display selected chord
-* properly draw the staff
+* Draw the staff. Not sure how to do it with TUI though.
 
-build instructions
+Build Instructions
 ---
-* the app can be build trivally like any other CMake project. however:
-	* you'll need Visual Studio (MSBuild) to support WinRT/MIDI2 APIs. otherwise you'd be limited to the legacy WinMM one	
-* in this case, open the project in Visual Studio (2022+) and build it from there.
-* additionally, you'll need to have Microsoft.Windows.Devices.Midi2 package installed to support MIDI2 APIs.
-	* this implies you'll need NuGet installed and available on your PATH as well
-		* you can get it from https://github.com/microsoft/MIDI/releases/download/dev-preview-6/Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg
-		* then, you can add it to your local NuGet package storage via `nuget add -Source <storage path> Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg`
-references
+* The app can be build trivally like any other CMake project. however:
+	* You'll need Visual Studio (MSBuild) to support WinRT/MIDI2 APIs. otherwise you'd be limited to the legacy WinMM one	
+* In this case, open the project in Visual Studio (2022+) and build it from there.
+* Additionally, you'll need to have Microsoft.Windows.Devices.Midi2 package installed to support MIDI2 APIs.	
+	* This implies you'll need NuGet installed and available on your PATH as well
+		* You can get it from https://github.com/microsoft/MIDI/releases/download/dev-preview-6/Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg
+		* Then, you can add it to your local NuGet package storage via `nuget add -Source <storage path> Microsoft.Windows.Devices.Midi2.1.0.24194.2233-preview.6.nupkg`
+
+References
 ---
 * https://github.com/juce-framework/JUCE/commit/9a38505dad7a5655edae320993f1926ae3979068
 * https://github.com/stammen/winrtmidi/
