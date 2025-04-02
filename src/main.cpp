@@ -181,6 +181,34 @@ void poll_input() {
 	}
 }
 void draw() {
+	auto draw_button_array = [&](int& value, const auto& names, const int id = 0, const int* states = nullptr) -> bool {
+		bool dirty = false;
+		for (int i = 0; i < extent_of(names); i++) {
+			bool active = value == i;
+			int styles = 0;
+			if (active)
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), styles++;
+			if (states && states[i])
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered)), styles++;
+			ImGui::PushID(id + i);
+			if (ImGui::Button(names[i], ImVec2(4, 0))) value = i, dirty = true;
+			ImGui::PopID();
+			ImGui::PopStyleColor(styles);
+			ImGui::SameLine();
+		}
+		return dirty;
+		};
+	auto draw_twiddle_button = [&](int& value, const int r_min, const int r_max, const int id = 0) {
+		bool dirty = false;
+		ImGui::PushID(id);
+		if (ImGui::Button("<", ImVec2(4, 0))) value = std::max(r_min, value - 1), dirty = true;
+		ImGui::PopID();
+		ImGui::SameLine();
+		ImGui::PushID(id + 1);
+		if (ImGui::Button(">", ImVec2(4, 0))) value = std::min(r_max, value + 1), dirty = true;
+		ImGui::PopID();
+		return dirty;
+		};
 	auto const& key_table = g_config.keyboardDisplayFlatOrSharp ? midi::chords::key_table_sharp : midi::chords::key_table_flat;
 	ImGui::SetNextWindowPos({ 0,0 });
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
@@ -211,34 +239,6 @@ void draw() {
 		draw_backend_selector(g_config.inputBackend, "Input Backend");
 		draw_backend_selector(g_config.outputBackend, "Output Backend");
 		const char* channel_names[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10","11","12","13","14","15","16" };
-		auto draw_button_array = [&](int& value, const auto& names, const int id = 0, const int* states = nullptr) -> bool {
-			bool dirty = false;
-			for (int i = 0; i < extent_of(names); i++) {
-				bool active = value == i;
-				int styles = 0;
-				if (active)
-					ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), styles++;
-				if (states && states[i])
-					ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered)), styles++;
-				ImGui::PushID(id + i);
-				if (ImGui::Button(names[i], ImVec2(4, 0))) value = i, dirty = true;
-				ImGui::PopID();
-				ImGui::PopStyleColor(styles);
-				ImGui::SameLine();
-			}
-			return dirty;
-			};
-		auto draw_twiddle_button = [&](int& value, const int r_min, const int r_max, const int id = 0) {
-			bool dirty = false;
-			ImGui::PushID(id);
-			if (ImGui::Button("<", ImVec2(4, 0))) value = std::max(r_min, value - 1), dirty = true;
-			ImGui::PopID();
-			ImGui::SameLine();
-			ImGui::PushID(id + 1);
-			if (ImGui::Button(">", ImVec2(4, 0))) value = std::min(r_max, value + 1), dirty = true;
-			ImGui::PopID();
-			return dirty;
-			};
 		ImGui::Text("Input");
 		if (!g_midiInContext->getStatus()) {
 			static std::string errorMessage = g_midiInContext->getMidiErrorMessage();
@@ -310,21 +310,13 @@ void draw() {
 		if (ImGui::Button("Refresh")) setup();
 	}
 	if (ImGui::CollapsingHeader("Viewer", ImGuiTreeNodeFlags_DefaultOpen)) {
-		static int root_key = 0, root_oct = 4;
+		static int root_oct = 4;
 		bool dirty = false;
-		dirty |= ImGui::InputInt("Octave", &root_oct, 0, 8);
-		ImGui::SameLine();
-		if (ImGui::BeginCombo("Root", key_table[root_key])) {
-			for (int i = 0; i < 12; i++) {
-				bool selected = root_key == i;
-				if (ImGui::Selectable(key_table[i], &selected)) root_key = i, dirty |= true;
-			}
-			ImGui::EndCombo();
-		}
-		int root = root_key + root_oct * 12;
+		ImGui::Text("Octave: %d", root_oct); ImGui::SameLine();
+		draw_twiddle_button(root_oct, 0, 8);		
 		static char name_pattern[256]{ "Ionian" };
 		dirty |= ImGui::InputText("Pattern", name_pattern, sizeof(name_pattern));
-		static std::vector<std::pair<std::string, const midi::chords::key_t*>> names;
+		static std::vector<std::tuple<std::string, const midi::chords::key_t*, int>> names;
 		static bool init = false;
 		static bool preview = false;
 		if (dirty || !init) {
@@ -332,35 +324,42 @@ void draw() {
 			if (preview)  g_midiChannelStates[g_config.inputChannel].keys = {};
 			char buf[256]{};
 			names.clear();
-			auto pb = [&](std::string str, auto ptr) {
+			auto pb = [&](std::string str, auto ptr, int root_key) {
 				if (str.find(name_pattern) == std::string::npos) return;
-				names.push_back({ str, ptr });
+				names.push_back({ str, ptr, root_key });
 				};
-			for (int i = 0; i < midi::chords::scale_table_size; i++) {
-				auto const& [keys, chords] = midi::chords::scale_table[i];
-				for (auto& v : chords) {
-					midi::chords::format_name(keys, v, (const char**)key_table, buf, root);
-					pb(buf, &keys);
+			for (int root_key = 0; root_key < 12; root_key++) {
+				int root = root_key + root_oct * 12;
+				for (int i = 0; i < midi::chords::scale_table_size; i++) {
+					auto const& [keys, chords] = midi::chords::scale_table[i];
+					for (auto& v : chords) {
+						midi::chords::format_name(keys, v, (const char**)key_table, buf, root);
+						pb(buf, &keys, root);
+					}
 				}
 			}
 			std::sort(names.begin(), names.end());
 			int sz = names.size();
-			for (int i = 0; i < midi::chords::chord_table_size; i++) {
-				auto const& [keys, chords] = midi::chords::chord_table[i];
-				for (auto& v : chords) {
-					midi::chords::format_name(keys, v, (const char**)key_table, buf, root);
-					pb(buf, &keys);
+			for (int root_key = 0; root_key < 12; root_key++) {
+				int root = root_key + root_oct * 12;
+				for (int i = 0; i < midi::chords::chord_table_size; i++) {
+					auto const& [keys, chords] = midi::chords::chord_table[i];
+					for (auto& v : chords) {
+						midi::chords::format_name(keys, v, (const char**)key_table, buf, root);
+						pb(buf, &keys, root);
+					}
 				}
 			}
-			std::sort(names.begin() + sz, names.end());
+			std::sort(names.begin() + sz, names.end());			
+			g_midiChannelStates[g_config.inputChannel].keys = {};
 		}
 		static int currPreview = 0;
 		if (currPreview >= names.size()) currPreview = 0;
 		ImGui::SameLine();
 		if (names.size()) {
-			if (ImGui::BeginCombo("Names", names[currPreview].first.c_str())) {
+			if (ImGui::BeginCombo("Names", std::get<0>(names[currPreview]).c_str())) {
 				int idx = 0;
-				for (auto& [name, ptr] : names) {
+				for (auto& [name, ptr, root] : names) {
 					if (ImGui::Selectable(name.c_str())) currPreview = idx;
 					idx++;
 				}
@@ -370,7 +369,7 @@ void draw() {
 		bool chkPreview = ImGui::Checkbox("Preview", &preview);
 		if (preview) {
 			if (names.size()) {
-				auto& [name, ptr] = names[currPreview];
+				auto& [name, ptr, root] = names[currPreview];
 				ImGui::TextUnformatted(name.c_str());
 				auto sta = midi::chords::to_key_states(*ptr, root);
 				for (int i = 0; i < 256; i++)
@@ -380,10 +379,9 @@ void draw() {
 						sta[i]
 					);
 			}
-		}
-		if (chkPreview) {
-			if (!preview) g_midiChannelStates[g_config.inputChannel].keys = {};
-		}
+		}		
+		ImGui::SameLine();
+		if (chkPreview) g_midiChannelStates[g_config.inputChannel].keys = {};
 	}
 	if (ImGui::CollapsingHeader("Keyboard", ImGuiTreeNodeFlags_DefaultOpen)) {
 		const ImVec2 whiteKeySize(6, 8);
