@@ -313,7 +313,7 @@ void draw() {
 		static int root_oct = 4;
 		bool dirty = false;
 		ImGui::Text("Octave: %d", root_oct); ImGui::SameLine();
-		draw_twiddle_button(root_oct, 0, 8);		
+		dirty |= draw_twiddle_button(root_oct, 0, 8);		
 		static char name_pattern[256]{ "Ionian" };
 		dirty |= ImGui::InputText("Pattern", name_pattern, sizeof(name_pattern));
 		static std::vector<std::tuple<std::string, const midi::chords::key_t*, int>> names;
