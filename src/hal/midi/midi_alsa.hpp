@@ -28,6 +28,17 @@ namespace midi {
                     status = 0x80 | (ev->data.note.channel & 0x0F);
                     b1 = ev->data.note.note;
                     b2 = ev->data.note.velocity;
+                } else if (ev->type == SND_SEQ_EVENT_CONTROLLER) { // For CCs (like Mod wheel, Sustain pedal, etc.)
+                    status = 0xB0 | (ev->data.control.channel & 0x0F);
+                    b1 = ev->data.control.param; // Controller number
+                    b2 = ev->data.control.value; // Controller value
+                } else if (ev->type == SND_SEQ_EVENT_PITCHBEND) { // For Pitch Bend
+                    status = 0xE0 | (ev->data.control.channel & 0x0F);
+                    // ALSA pitch bend value is signed (-8192 to +8191).
+                    // MIDI pitch bend is 0 to 16383 (14-bit), with 8192 as center.
+                    unsigned short level = static_cast<unsigned short>(ev->data.control.value + 8192);
+                    b1 = level & 0x7F; // LSB
+                    b2 = (level >> 7) & 0x7F; // MSB
                 }
                 if (status != 0) { 
                     auto msg = midi1_packet(status, b1, b2);
@@ -195,7 +206,7 @@ namespace midi {
             else {
                 return;
             }
-            last_alsa_error = snd_seq_event_output_direct(handle, &ev);
+            snd_seq_event_output_direct(handle, &ev);
         }
         inline virtual std::string getMidiErrorMessage() override {
             if (last_alsa_error == 0) return "No error.";
@@ -240,4 +251,4 @@ namespace midi {
         }
     };
 } 
-#endif 
+#endif

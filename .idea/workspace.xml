@@ -29,16 +29,10 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d9bfff4c-2032-4c6e-86b0-ef6c53a421c9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/hal/midi/midi_alsa.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="d9bfff4c-2032-4c6e-86b0-ef6c53a421c9" name="Changes" comment="Linux support">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hal/hal.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/hal/hal.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hal/hal_midi.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/hal/hal_midi.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hal/midi/midi_winmm.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/hal/midi/midi_winmm.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hal/midi/midi_alsa.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/hal/midi/midi_alsa.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -261,8 +255,17 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1748678939462</updated>
-      <workItem from="1748678941140" duration="5483000" />
+      <workItem from="1748678941140" duration="6307000" />
     </task>
+    <task id="LOCAL-00001" summary="Linux support">
+      <option name="closed" value="true" />
+      <created>1748689246309</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1748689246309</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -272,6 +275,10 @@
     <isAutomaticCheckingOnLaunch value="false" />
     <isAutomaticFoundErrors value="true" />
     <isAutomaticReloadCMake value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Linux support" />
+    <option name="LAST_COMMIT_MESSAGE" value="Linux support" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

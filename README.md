@@ -3,8 +3,8 @@ Keyboard
 ![image](https://github.com/user-attachments/assets/982e5993-5188-4bc0-b434-e6ff33763085)
 
 MIDI Chord detector & browser. In your terminal.
-* Windows/macOS support
-* WinMM/WinRT/MIDI2/CoreAudio API support (BLE MIDI devices are supported w/ WinRT/MIDI2, Multi-client is supported w/ MIDI2)
+* Windows/Linux(ALSA)/macOS(CoreAudio) support
+* WinMM/WinRT/MIDI2/ALSA/CoreAudio API support (BLE MIDI devices are supported w/ WinRT/MIDI2, Multi-client is supported w/ MIDI2)
 * detects/visualizes chords/scales/intervals and display their name(s).
 * MIDI passthrough to another output device
 
