@@ -39,6 +39,9 @@ namespace midi {
                     unsigned short level = static_cast<unsigned short>(ev->data.control.value + 8192);
                     b1 = level & 0x7F; // LSB
                     b2 = (level >> 7) & 0x7F; // MSB
+                } else if (ev->type == SND_SEQ_EVENT_PGMCHANGE) { // For Program Change
+                    status = 0xC0 | (ev->data.control.channel & 0x0F);
+                    b1 = ev->data.control.value; // Program number
                 }
                 if (status != 0) { 
                     auto msg = midi1_packet(status, b1, b2);
