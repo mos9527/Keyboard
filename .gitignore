@@ -365,3 +365,4 @@ FodyWeavers.xsd
 
 # GET OUT
 .DS_Store
+.idea

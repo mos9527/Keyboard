@@ -1,7 +1,9 @@
 #ifndef HAL_MIDI
 // MIDI
 #include "midi/midi.hpp"
-
+#ifdef __linux__
+#include "midi/midi_alsa.hpp"
+#endif // !__linux__
 #ifdef __APPLE__
 #include "midi/midi_coreaudio.hpp"
 #endif // !__APPLE

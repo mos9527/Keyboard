@@ -13,7 +13,8 @@ project ("Keyboard")
 set(CMAKE_CXX_STANDARD 20)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-add_executable (Keyboard ${SOURCES})
+add_executable (Keyboard ${SOURCES}
+		src/hal/midi/midi_alsa.hpp)
 
 if (WIN32)
 	set(MINGW true)
@@ -66,6 +67,13 @@ if (APPLE)
 	# CoreAudio
 	target_link_libraries(Keyboard PRIVATE "-framework Foundation -framework CoreMidi")
 endif()
+
+if (LINUX)
+	message(STATUS "Building for Linux")
+	# Alsa
+	find_package(ALSA REQUIRED)
+	target_link_libraries(Keyboard PRIVATE ALSA::ALSA)
+endif ()
 
 # ImTui
 target_include_directories(Keyboard PRIVATE "contrib/ImTui/include")

@@ -1,5 +1,10 @@
 #pragma once
 // Monolithic header for Hardware Abstraction Layer (HAL)
+// Linux
+#ifdef __linux__
+#include <alsa/asoundlib.h>
+#endif
+
 
 // macOS
 #ifdef __APPLE__

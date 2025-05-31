@@ -55,6 +55,9 @@ const char* MIDI_BACKENDS[] = {
 #ifdef HAL_MIDI_COREAUDIO_IMPL
 	"CoreAudio",
 #endif
+#ifdef HAL_MIDI_ALSA_IMPL
+	"ALSA",
+#endif
 };
 template<typename... T> midiInContext_t make_midi_input_context(T const&... args) {
 	switch (g_config.inputBackend)
@@ -74,6 +77,10 @@ template<typename... T> midiInContext_t make_midi_input_context(T const&... args
 #ifdef HAL_MIDI_COREAUDIO_IMPL
 		return std::make_unique<midi::inputContext_CoreAudio>(args...);
 #endif
+#ifdef HAL_MIDI_ALSA_IMPL
+		return std::make_unique<midi::inputContext_ALSA>(args...);
+#endif
+
 	}
 }
 template<typename... T> midiOutContext_t make_midi_output_context(T const&... args) {
@@ -93,6 +100,9 @@ template<typename... T> midiOutContext_t make_midi_output_context(T const&... ar
 #endif
 #ifdef HAL_MIDI_COREAUDIO_IMPL
 		return std::make_unique<midi::outputContext_CoreAudio>(args...);
+#endif
+#ifdef HAL_MIDI_ALSA_IMPL
+		return std::make_unique<midi::outputContext_ALSA>(args...);
 #endif
 	}
 }

@@ -58,7 +58,7 @@ namespace midi {
 		}
 		/****/
 		inline virtual std::string getMidiErrorMessage() {
-			static char buffer[1024];
+			char buffer[1024]{};
 			midiInGetErrorTextA(status, buffer, sizeof(buffer));
 			return buffer;
 		}
@@ -98,7 +98,7 @@ namespace midi {
 			midiOutShortMsg(handle, data.param);
 		}
 		inline virtual std::string getMidiErrorMessage() {
-			static char buffer[1024];
+			char buffer[1024]{};
 			midiOutGetErrorTextA(status, buffer, sizeof(buffer));
 			return buffer;
 		}
