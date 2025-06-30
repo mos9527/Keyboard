@@ -329,6 +329,7 @@ void draw() {
 		static std::vector<std::tuple<std::string, const midi::chords::key_t*, int>> names;
 		static bool init = false;
 		static bool preview = false;
+		static bool previewOctaves = false;
 		if (dirty || !init) {
 			init = true;
 			if (preview)  g_midiChannelStates[g_config.inputChannel].keys = {};
@@ -377,11 +378,21 @@ void draw() {
 			}
 		}
 		bool chkPreview = ImGui::Checkbox("Preview", &preview);
+		ImGui::SameLine();
+		bool chkPreviewOctaves = ImGui::Checkbox("Preview Octaves",&previewOctaves);
 		if (preview) {
 			if (names.size()) {
 				auto& [name, ptr, root] = names[currPreview];
 				ImGui::TextUnformatted(name.c_str());
 				auto sta = midi::chords::to_key_states(*ptr, root);
+				if (previewOctaves) {
+					for (int octave = -12;octave < 12; octave++) {
+						int root2 = root + octave * 12;
+						if (root2 < 0 || root2 >= 256) continue;
+						auto sta2 = midi::chords::to_key_states(*ptr, root2);
+						for (int i = 0; i < 256; i++) sta[i] = std::max(sta[i], sta2[i]);
+					}
+				}
 				for (int i = 0; i < 256; i++)
 					g_midiChannelStates[g_config.inputChannel].keys[i] =
 					std::max(
@@ -391,7 +402,7 @@ void draw() {
 			}
 		}		
 		ImGui::SameLine();
-		if (chkPreview) g_midiChannelStates[g_config.inputChannel].keys = {};
+		if (chkPreview || chkPreviewOctaves) g_midiChannelStates[g_config.inputChannel].keys = {};
 	}
 	if (ImGui::CollapsingHeader("Keyboard", ImGuiTreeNodeFlags_DefaultOpen)) {
 		const ImVec2 whiteKeySize(6, 8);
